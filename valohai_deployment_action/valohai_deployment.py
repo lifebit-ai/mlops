@@ -88,7 +88,7 @@ def create_version(commit_id: str) -> None:
     payload = {
         'commit': commit_id,
         'deployment': DEPLOYMENT_ID,
-        'name': commit_id + "v91",
+        'name': commit_id + "v91-local",
         'enabled': True,
         'endpoint_configurations': {'predict': {'enabled': True, "files": datum_ids}},
         'environment_variables': {'VH_CLEAN': '1'},
