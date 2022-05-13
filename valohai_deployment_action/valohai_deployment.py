@@ -14,7 +14,7 @@ logging.basicConfig(
 )
 
 # Load Valohai yaml file to get datum names (endpoint configurations)
-valohai_config = yaml.load(open("valohai.yaml", "r"), Loader=yaml.FullLoader)
+valohai_config = yaml.load(open("../valohai.yaml", "r"), Loader=yaml.FullLoader)
 
 # Valohai authentication token
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
