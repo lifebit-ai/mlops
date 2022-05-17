@@ -2,7 +2,6 @@ import argparse
 import json
 import logging
 import os
-from typing import Optional, Dict
 
 import requests
 import yaml
@@ -14,7 +13,7 @@ logging.basicConfig(
 )
 
 # Load Valohai yaml file to get datum names (endpoint configurations)
-valohai_config = yaml.load(open("../valohai.yaml", "r"), Loader=yaml.FullLoader)
+valohai_config = yaml.load(open("valohai.yaml", "r"), Loader=yaml.FullLoader)
 
 # Valohai authentication token
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
@@ -24,23 +23,29 @@ PROJECT_ID = os.getenv('PROJECT_ID')
 DEPLOYMENT_ID = os.getenv('DEPLOYMENT_ID')
 
 headers = {
-    'Authorization': f'Token {AUTH_TOKEN}',
+    'Authorization': 'Token {}'.format(AUTH_TOKEN),
     'Content-Type': 'application/json'
 }
 
 
-def get_datum_ids() -> Optional[Dict]:
+def get_datum_ids_of_files_for_deployment():
     """
     Create a list of files (valohai.yaml) -> valohai datum id mapping
-    to be sent as payload to create a new version
+    to be send as payload to create a new version
     """
+    # If there are no files required for this endpoint
+    if 'files' not in valohai_config[0]['endpoint']:
+        return {}
+
     # Create a dictionary of data files based on valohai.yaml config
-    required_data_files = {file['name']: file['path']
-                           for file in valohai_config[0]['endpoint']['files']}
+    required_data_files = dict(
+        (file['name'], file['path'])
+        for file in valohai_config[0]['endpoint']['files']
+    )
 
     datum_ids = {}
 
-    # If any data file is required for the endpoint, get its datum id
+    # If any data file is required for the endpoint, get it's datum id
     if required_data_files:
         datum_api_url = 'https://app.valohai.com/api/v0/datum-aliases/'
         datum_res = requests.get(datum_api_url, headers=headers)
@@ -51,26 +56,36 @@ def get_datum_ids() -> Optional[Dict]:
         # Filter out datum for this project get a mapping of file UUIDs
         for datum in datums['results']:
             if datum['project']['id'] == PROJECT_ID:
-                logging.info(datum['datum']['name'], datum['datum']['id'])
                 datum_ids[datum['datum']['name']] = datum['datum']['id']
 
     # Verify all required data files are covered in the  datum_ids
     if set(required_data_files.values()) == set(datum_ids.keys()):
-        return {file: datum_ids[path] for file, path in required_data_files.items()}
+        return dict((file, datum_ids[path]) for file, path in required_data_files.items())
     else:
-        logging.warning("Missing Datum Files. Deployment might not succeed!")
+        logging.error("No Datum Files found. Deployment might not succeed!")
+        return None
 
 
-def create_version(commit_id: str) -> None:
+def create_version(
+        branch: str,
+        commit_id: str,
+        replicas: int,
+        memory_limit: int,
+        cpu_request: int
+) -> None:
     """
-    Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`. 
+    Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`.
 
-    :param commit_id: Commit id to be used for the version
+    :param branch: Github branch name
+    :param commit_id: Github Commit id to be used for the version
+    :param replicas: No. of replicas instances to deploy for this version
+    :param memory_limit: Memory limit for this deployment
+    :param cpu_request: Proportion of cpus to use for this deployment
     """
 
-    # VALOHAI API URLs to fetch new changes from GitHub repo and to deploy a new version
-    fetch_repo_api_url = f'https://app.valohai.com/api/v0/projects/{PROJECT_ID}/fetch/'
-
+    # VALOHAI API URLs to fetch new changes from github repo and to deploy a new version
+    fetch_repo_api_url = 'https://app.valohai.com/api/v0/projects/{0}/fetch/'.format(
+        PROJECT_ID)
     deployment_api_url = 'https://app.valohai.com/api/v0/deployment-versions/'
 
     # Fetch all new changes from the repository
@@ -80,7 +95,17 @@ def create_version(commit_id: str) -> None:
     fetch_repo_changes = requests.post(fetch_repo_api_url, json={
         'id': PROJECT_ID}, headers=headers)
 
-    datum_ids = get_datum_ids()
+    datum_ids = get_datum_ids_of_files_for_deployment()
+
+    endpoint_config = {
+        'predict': {
+            'enabled': True,
+            'files': datum_ids,
+            'replicas': replicas,
+            'memory_limit': memory_limit,
+            'cpu_request': cpu_request
+        },
+    }
 
     # Deployment name is same as the commit id
     # Additionally we also use `VH_CLEAN` valohai env variable
@@ -88,9 +113,9 @@ def create_version(commit_id: str) -> None:
     payload = {
         'commit': commit_id,
         'deployment': DEPLOYMENT_ID,
-        'name': commit_id + "v91",
+        'name': "{}.{}".format(branch, commit_id),
         'enabled': True,
-        'endpoint_configurations': {'predict': {'enabled': True, "files": datum_ids}},
+        'endpoint_configurations': endpoint_config,
         'environment_variables': {'VH_CLEAN': '1'},
     }
 
@@ -98,13 +123,22 @@ def create_version(commit_id: str) -> None:
     deployment_response = requests.post(
         deployment_api_url, json=payload, headers=headers)
 
-    deployment_response.raise_for_status()
     logging.info(json.loads(deployment_response.content))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""Valohai version deployment.""")
+
+    parser.add_argument(
+        "--branch",
+        "-b",
+        type=str,
+        dest="branch",
+        help="Branch Name",
+        required=True
+    )
+
     parser.add_argument(
         "--commit_id",
         "-ci",
@@ -114,5 +148,32 @@ if __name__ == "__main__":
         required=True
     )
 
+    parser.add_argument(
+        "--replicas",
+        "-r",
+        type=int,
+        dest="replicas",
+        help="No. of replicas instances to deploy for this version",
+        default=1
+    )
+
+    parser.add_argument(
+        "--memory_limit",
+        "-mem",
+        type=int,
+        dest="memory_limit",
+        help="Memory limit for this endpoint",
+        default=0
+    )
+
+    parser.add_argument(
+        "--cpu_request",
+        "-cpu",
+        type=float,
+        dest="cpu_request",
+        help="Proportion of CPUs to use for this verion",
+        default=0.1
+    )
+
     args = parser.parse_args()
-    create_version(args.commit_id)
+    create_version(args.branch, args.commit_id, args.replicas, args.memory_limit, args.cpu_request)
