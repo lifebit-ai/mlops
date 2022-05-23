@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 
 import requests
 import yaml
@@ -27,6 +28,8 @@ headers = {
     'Content-Type': 'application/json'
 }
 
+VALOHAI_API_BASE_URL = 'https://app.valohai.com/api/v0/'
+
 
 def get_datum_ids_of_files_for_deployment():
     """
@@ -47,7 +50,7 @@ def get_datum_ids_of_files_for_deployment():
 
     # If any data file is required for the endpoint, get it's datum id
     if required_data_files:
-        datum_api_url = 'https://app.valohai.com/api/v0/datum-aliases/'
+        datum_api_url = VALOHAI_API_BASE_URL + 'datum-aliases/'
         datum_res = requests.get(datum_api_url, headers=headers)
         datum_res.raise_for_status()
 
@@ -62,8 +65,8 @@ def get_datum_ids_of_files_for_deployment():
     if set(required_data_files.values()) == set(datum_ids.keys()):
         return dict((file, datum_ids[path]) for file, path in required_data_files.items())
     else:
-        logging.error("No Datum Files found. Deployment might not succeed!")
-        return None
+        logging.error("No Datum Files found. Deployment will not succeed!")
+        sys.exit("Missing Datum files.")
 
 
 def create_version(
@@ -84,9 +87,8 @@ def create_version(
     """
 
     # VALOHAI API URLs to fetch new changes from github repo and to deploy a new version
-    fetch_repo_api_url = 'https://app.valohai.com/api/v0/projects/{0}/fetch/'.format(
-        PROJECT_ID)
-    deployment_api_url = 'https://app.valohai.com/api/v0/deployment-versions/'
+    fetch_repo_api_url = '{}projects/{}/fetch/'.format(VALOHAI_API_BASE_URL, PROJECT_ID)
+    deployment_api_url = VALOHAI_API_BASE_URL + 'deployment-versions/'
 
     # Fetch all new changes from the repository
     # https://app.valohai.com/api/docs/#projects-fetch
@@ -160,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--memory_limit",
         "-mem",
-        type=int,
+        type=float,
         dest="memory_limit",
         help="Memory limit for this endpoint",
         default=0
