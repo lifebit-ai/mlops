@@ -24,7 +24,7 @@ PROJECT_ID = os.getenv('PROJECT_ID')
 DEPLOYMENT_ID = os.getenv('DEPLOYMENT_ID')
 
 headers = {
-    'Authorization': 'Token {}'.format(AUTH_TOKEN),
+    'Authorization': f'Token {AUTH_TOKEN}',
     'Content-Type': 'application/json'
 }
 
@@ -87,7 +87,7 @@ def create_version(
     """
 
     # VALOHAI API URLs to fetch new changes from github repo and to deploy a new version
-    fetch_repo_api_url = '{}projects/{}/fetch/'.format(VALOHAI_API_BASE_URL, PROJECT_ID)
+    fetch_repo_api_url = f'{VALOHAI_API_BASE_URL}projects/{PROJECT_ID}/fetch/'
     deployment_api_url = VALOHAI_API_BASE_URL + 'deployment-versions/'
 
     # Fetch all new changes from the repository
@@ -115,7 +115,7 @@ def create_version(
     payload = {
         'commit': commit_id,
         'deployment': DEPLOYMENT_ID,
-        'name': "{}.{}".format(branch, commit_id),
+        'name': f"{branch}.{commit_id}",
         'enabled': True,
         'endpoint_configurations': endpoint_config,
         'environment_variables': {'VH_CLEAN': '1'},
