@@ -120,8 +120,7 @@ def create_version(
         'endpoint_configurations': endpoint_config,
         'environment_variables': {'VH_CLEAN': '1'},
     }
-    
-    logging.info(payload)
+
     # Send a POST request to create a new version for this deployment
     deployment_response = requests.post(
         deployment_api_url, json=payload, headers=headers)
