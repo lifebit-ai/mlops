@@ -116,10 +116,12 @@ def create_version(
     # Deployment name is same as the commit id
     # Additionally we also use `VH_CLEAN` valohai env variable
     # to ensure updated image is pulled from ECR
+    # version_name = f"{branch}.{commit_id}"
+    version_name = "stefan"
     payload = {
         'commit': commit_id,
         'deployment': DEPLOYMENT_ID,
-        'name': f"{branch}.{commit_id}",
+        'name': version_name,
         'enabled': True,
         'endpoint_configurations': endpoint_config,
         'environment_variables': {'VH_CLEAN': '1'},
@@ -129,14 +131,15 @@ def create_version(
     deployment_response = requests.post(
         deployment_api_url, json=payload, headers=headers)
 
-    new_version_response = json.loads(deployment_response.content)
-    logging.info(new_version_response)
+    logging.info(json.loads(deployment_response.content))
 
     body = {
         "deployment": DEPLOYMENT_ID,
-        "target": new_version_response['name'],
+        "target": version_name,
         "name": alias_name
     }
+
+    # Send a POST request to create a new alias for this deployment
     deployment_response = requests.post(
         deployment_aliases_api_url, json=body, headers=headers)
 
@@ -198,7 +201,7 @@ if __name__ == "__main__":
         type=str,
         dest="alias_name",
         help="Name for the new alias",
-        default="staging"
+        default="staging-stefan"
     )
 
     args = parser.parse_args()
