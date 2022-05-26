@@ -116,8 +116,7 @@ def create_version(
     # Deployment name is same as the commit id
     # Additionally we also use `VH_CLEAN` valohai env variable
     # to ensure updated image is pulled from ECR
-    # version_name = f"{branch}.{commit_id}"
-    version_name = "stefan"
+    version_name = f"{branch}.{commit_id}"
     payload = {
         'commit': commit_id,
         'deployment': DEPLOYMENT_ID,
@@ -131,11 +130,12 @@ def create_version(
     deployment_response = requests.post(
         deployment_api_url, json=payload, headers=headers)
 
-    logging.info(json.loads(deployment_response.content))
+    response = json.loads(deployment_response.content)
+    logging.info(response)
 
     body = {
         "deployment": DEPLOYMENT_ID,
-        "target": version_name,
+        "target": response['url'],
         "name": alias_name
     }
 
