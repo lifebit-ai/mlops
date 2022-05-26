@@ -74,7 +74,8 @@ def create_version(
         commit_id: str,
         replicas: int,
         memory_limit: int,
-        cpu_request: int
+        cpu_request: int,
+        alias_name: str
 ) -> None:
     """
     Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`.
@@ -84,11 +85,14 @@ def create_version(
     :param replicas: No. of replicas instances to deploy for this version
     :param memory_limit: Memory limit for this deployment
     :param cpu_request: Proportion of cpus to use for this deployment
+    :param alias_name: Name for the new alias
+
     """
 
     # VALOHAI API URLs to fetch new changes from github repo and to deploy a new version
     fetch_repo_api_url = f'{VALOHAI_API_BASE_URL}projects/{PROJECT_ID}/fetch/'
     deployment_api_url = VALOHAI_API_BASE_URL + 'deployment-versions/'
+    deployment_aliases_api_url = VALOHAI_API_BASE_URL + 'deployment-version-aliases/'
 
     # Fetch all new changes from the repository
     # https://app.valohai.com/api/docs/#projects-fetch
@@ -124,6 +128,17 @@ def create_version(
     # Send a POST request to create a new version for this deployment
     deployment_response = requests.post(
         deployment_api_url, json=payload, headers=headers)
+
+    new_version_response = json.loads(deployment_response.content)
+    logging.info(new_version_response)
+
+    body = {
+        "deployment": DEPLOYMENT_ID,
+        "target": new_version_response['name'],
+        "name": alias_name
+    }
+    deployment_response = requests.post(
+        deployment_aliases_api_url, json=body, headers=headers)
 
     logging.info(json.loads(deployment_response.content))
 
@@ -177,5 +192,14 @@ if __name__ == "__main__":
         default=0.1
     )
 
+    parser.add_argument(
+        "--alias_name",
+        "-a",
+        type=str,
+        dest="alias_name",
+        help="Name for the new alias",
+        default="staging"
+    )
+
     args = parser.parse_args()
-    create_version(args.branch, args.commit_id, args.replicas, args.memory_limit, args.cpu_request)
+    create_version(args.branch, args.commit_id, args.replicas, args.memory_limit, args.cpu_request, args.alias_name)
