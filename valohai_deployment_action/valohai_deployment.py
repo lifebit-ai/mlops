@@ -135,7 +135,7 @@ def create_version(
 
     body = {
         "deployment": DEPLOYMENT_ID,
-        "target": response['url'],
+        "target": response['version'],
         "name": alias_name
     }
 
