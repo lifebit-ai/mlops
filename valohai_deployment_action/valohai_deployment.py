@@ -149,7 +149,7 @@ def create_version(
             # Send a PUT request to update an existing alias for this deployment
             alias_id = aliases['id']
             logging.info(deployment_aliases_api_url + '{' + alias_id + '}')
-            logging.info(f"{deployment_aliases_api_url}{ {alias_id} }")
+            logging.info(f"{deployment_aliases_api_url}{alias_id}")
             alias_update_response = requests.put(
                 f"{deployment_aliases_api_url}/{ {alias_id} }", json={
                     "target": response["endpoints"][0]["version"],
