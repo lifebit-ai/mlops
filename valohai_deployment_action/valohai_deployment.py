@@ -68,12 +68,12 @@ def get_datum_ids_of_files_for_deployment():
 
 
 def create_version(
-    branch: str,
-    commit_id: str,
-    replicas: int,
-    memory_limit: int,
-    cpu_request: int,
-    alias_name: str,
+        branch: str,
+        commit_id: str,
+        replicas: int,
+        memory_limit: int,
+        cpu_request: int,
+        alias_name: str,
 ) -> None:
     """
     Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`.
@@ -90,6 +90,7 @@ def create_version(
     fetch_repo_api_url = f"{VALOHAI_API_BASE_URL}projects/{PROJECT_ID}/fetch/"
     deployment_api_url = VALOHAI_API_BASE_URL + "deployment-versions/"
     deployment_aliases_api_url = VALOHAI_API_BASE_URL + "deployment-version-aliases/"
+    deployment_aliases_update_api_url = VALOHAI_API_BASE_URL + "deployment-version-aliases/"
 
     # Fetch all new changes from the repository
     # https://app.valohai.com/api/docs/#projects-fetch
@@ -138,6 +139,10 @@ def create_version(
         "name": alias_name,
     }
 
+    get_alias_response = requests.get(
+        f"{deployment_aliases_update_api_url}/{ {alias_name} }", headers=headers
+    )
+    logging.info(json.loads(deployment_response.content))
     # Send a POST request to create a new alias for this deployment
     deployment_response = requests.post(
         deployment_aliases_api_url, json=body, headers=headers
