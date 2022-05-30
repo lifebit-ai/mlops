@@ -68,12 +68,12 @@ def get_datum_ids_of_files_for_deployment():
 
 
 def create_version(
-        branch: str,
-        commit_id: str,
-        replicas: int,
-        memory_limit: int,
-        cpu_request: int,
-        alias_name: str,
+    branch: str,
+    commit_id: str,
+    replicas: int,
+    memory_limit: int,
+    cpu_request: int,
+    alias_name: str,
 ) -> None:
     """
     Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`.
@@ -140,24 +140,30 @@ def create_version(
 
     get_alias_response = requests.get(
         deployment_aliases_api_url,
-        params={"project": response['commit']['project_id']}, headers=headers
+        params={"project": response["commit"]["project_id"]},
+        headers=headers,
     )
     logging.info(json.loads(get_alias_response.content))
 
-    for aliases in json.loads(get_alias_response.content)['results']:
-        if alias_name == aliases['name'] and aliases['enabled'] is True:
+    for aliases in json.loads(get_alias_response.content)["results"]:
+        if alias_name == aliases["name"] and aliases["enabled"] is True:
+            logging.info("Alias is being updated.")
+
             # Send a PUT request to update an existing alias for this deployment
-            logging.info(aliases['url'])
             alias_update_response = requests.put(
-                aliases['url'],
+                aliases["url"],
                 json={
                     "target": response["endpoints"][0]["version"],
                     "name": alias_name,
-                }, headers=headers
+                },
+                headers=headers,
             )
+
             logging.info(json.loads(alias_update_response.content))
             break
     else:
+        logging.info("Alias is being created.")
+
         # Send a POST request to create a new alias for this deployment
         create_alias_response = requests.post(
             deployment_aliases_api_url, json=body, headers=headers
