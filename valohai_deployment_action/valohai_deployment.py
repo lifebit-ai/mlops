@@ -140,7 +140,7 @@ def create_version(
     }
 
     get_alias_response = requests.get(
-        f"{deployment_aliases_update_api_url}/{ {alias_name} }", headers=headers
+        deployment_aliases_update_api_url, headers=headers
     )
     logging.info(json.loads(deployment_response.content))
     # Send a POST request to create a new alias for this deployment
