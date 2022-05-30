@@ -90,7 +90,6 @@ def create_version(
     fetch_repo_api_url = f"{VALOHAI_API_BASE_URL}projects/{PROJECT_ID}/fetch/"
     deployment_api_url = VALOHAI_API_BASE_URL + "deployment-versions/"
     deployment_aliases_api_url = VALOHAI_API_BASE_URL + "deployment-version-aliases/"
-    deployment_aliases_update_api_url = VALOHAI_API_BASE_URL + "deployment-version-aliases/"
 
     # Fetch all new changes from the repository
     # https://app.valohai.com/api/docs/#projects-fetch
@@ -140,16 +139,28 @@ def create_version(
     }
 
     get_alias_response = requests.get(
-        "https://app.valohai.com/api/v0/deployment-version-aliases/", headers=headers
-    )
-    logging.info(json.loads(get_alias_response.content))
-    
-    # Send a POST request to create a new alias for this deployment
-    deployment_response = requests.post(
-        deployment_aliases_api_url, json=body, headers=headers
+        "deployment_aliases_api_url",
+        params={"project": response['commit']['project_id']}, headers=headers
     )
 
-    logging.info(json.loads(deployment_response.content))
+    for aliases in json.loads(get_alias_response.content)['results']:
+        if alias_name == aliases['name'] and aliases['enabled'] is True:
+            # Send a PUT request to update an existing alias for this deployment
+            alias_update_response = requests.put(
+                f"{deployment_aliases_api_url}/{ {aliases['id']} }", json={
+                    "target": response["endpoints"][0]["version"],
+                    "name": alias_name,
+                }, headers=headers
+            )
+            logging.info(json.loads(alias_update_response.content))
+            break
+    else:
+        # Send a POST request to create a new alias for this deployment
+        create_alias_response = requests.post(
+            deployment_aliases_api_url, json=body, headers=headers
+        )
+
+        logging.info(json.loads(create_alias_response.content))
 
 
 if __name__ == "__main__":
