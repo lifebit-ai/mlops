@@ -139,7 +139,7 @@ def create_version(
     }
 
     get_alias_response = requests.get(
-        "deployment_aliases_api_url",
+        deployment_aliases_api_url,
         params={"project": response['commit']['project_id']}, headers=headers
     )
 
