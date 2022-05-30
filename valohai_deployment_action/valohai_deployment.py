@@ -147,10 +147,10 @@ def create_version(
     for aliases in json.loads(get_alias_response.content)['results']:
         if alias_name == aliases['name'] and aliases['enabled'] is True:
             # Send a PUT request to update an existing alias for this deployment
-            alias_id = aliases['id']
-            logging.info(f"{deployment_aliases_api_url}{alias_id}/")
+            logging.info(aliases['url'])
             alias_update_response = requests.put(
-                f"{deployment_aliases_api_url}/{ {alias_id} }", json={
+                aliases['url'],
+                json={
                     "target": response["endpoints"][0]["version"],
                     "name": alias_name,
                 }, headers=headers
