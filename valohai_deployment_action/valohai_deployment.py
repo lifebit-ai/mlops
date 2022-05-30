@@ -140,9 +140,10 @@ def create_version(
     }
 
     get_alias_response = requests.get(
-        deployment_aliases_update_api_url, headers=headers
+        "https://app.valohai.com/api/v0/deployment-version-aliases/", headers=headers
     )
-    logging.info(json.loads(deployment_response.content))
+    logging.info(json.loads(get_alias_response.content))
+    
     # Send a POST request to create a new alias for this deployment
     deployment_response = requests.post(
         deployment_aliases_api_url, json=body, headers=headers
