@@ -68,12 +68,12 @@ def get_datum_ids_of_files_for_deployment():
 
 
 def create_version(
-    branch: str,
-    commit_id: str,
-    replicas: int,
-    memory_limit: int,
-    cpu_request: int,
-    alias_name: str,
+        branch: str,
+        commit_id: str,
+        replicas: int,
+        memory_limit: int,
+        cpu_request: int,
+        alias_name: str,
 ) -> None:
     """
     Deploy a new version for `PROJECT_ID/DEPLOYMENT_ID`.
@@ -146,7 +146,7 @@ def create_version(
     logging.info(json.loads(get_alias_response.content))
 
     for aliases in json.loads(get_alias_response.content)["results"]:
-        if alias_name == aliases["name"] and aliases["enabled"] is True:
+        if alias_name == aliases["name"]:
             logging.info("Alias is being updated.")
 
             # Send a PUT request to update an existing alias for this deployment
