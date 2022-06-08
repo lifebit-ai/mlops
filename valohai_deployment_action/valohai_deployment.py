@@ -200,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--memory_limit",
         "-mem",
-        type=float,
+        type=int,
         dest="memory_limit",
         help="Memory limit for this endpoint",
         default=0,
