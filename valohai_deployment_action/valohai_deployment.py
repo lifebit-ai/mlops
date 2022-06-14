@@ -57,7 +57,7 @@ def get_datum_ids_of_files_for_deployment():
             if datum["project"]["id"] == PROJECT_ID:
                 datum_ids[datum["datum"]["name"]] = datum["datum"]["id"]
 
-    # Verify all required data files are covered in the  datum_ids
+    # Verify all required data files are covered in the datum_ids
     if set(required_data_files.values()) == set(datum_ids.keys()):
         return dict(
             (file, datum_ids[path]) for file, path in required_data_files.items()
@@ -122,6 +122,7 @@ def create_version(
         "enabled": True,
         "endpoint_configurations": endpoint_config,
         "environment_variables": {"VH_CLEAN": "1"},
+        "inherit_environment_variables": True
     }
 
     # Send a POST request to create a new version for this deployment
