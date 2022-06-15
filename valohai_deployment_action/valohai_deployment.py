@@ -116,6 +116,8 @@ def create_version(
     # Deployment name is same as the commit id
     # Additionally we also use `VH_CLEAN` valohai env variable
     # to ensure updated image is pulled from ECR
+    branch = "valohai-dev"
+    commit_id = "5345736b5788e90334b5c2dda3bd35ec3c7dd52b"
     version_name = f"{branch}.{commit_id}"
     payload = {
         "commit": commit_id,
