@@ -2,10 +2,12 @@ import argparse
 import json
 import logging
 import os
-import sys
+from typing import Dict, Optional
 
 import requests
 import yaml
+
+from custom_exceptions import MissingDatumException, VersionNotCreatedException, AliasNotCreatedException
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +30,7 @@ headers = {"Authorization": f"Token {AUTH_TOKEN}", "Content-Type": "application/
 VALOHAI_API_BASE_URL = "https://app.valohai.com/api/v0/"
 
 
-def get_datum_ids_of_files_for_deployment():
+def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
     """
     Create a list of files (valohai.yaml) -> valohai datum id mapping
     to be send as payload to create a new version
@@ -64,7 +66,7 @@ def get_datum_ids_of_files_for_deployment():
         )
     else:
         logging.error("No Datum Files found. Deployment will not succeed!")
-        sys.exit("Missing Datum files.")
+        raise MissingDatumException("Missing Datum files.")
 
 
 def create_version(
@@ -130,7 +132,12 @@ def create_version(
         deployment_api_url, json=payload, headers=headers
     )
 
+    if deployment_response.status_code != 201:
+        raise VersionNotCreatedException(f"Version can not be created! {deployment_response.status_code}")
+
     response = json.loads(deployment_response.content)
+
+    logging.info("New version created!")
     logging.info(response)
 
     body = {
@@ -144,6 +151,7 @@ def create_version(
         params={"project": response["commit"]["project_id"]},
         headers=headers,
     )
+    logging.info(f"Aliases found:")
     logging.info(json.loads(get_alias_response.content))
 
     for aliases in json.loads(get_alias_response.content)["results"]:
@@ -160,6 +168,10 @@ def create_version(
                 headers=headers,
             )
 
+            if alias_update_response.status_code != 200:
+                raise AliasNotCreatedException(f"Alias can not be updated! {alias_update_response.status_code}")
+
+            logging.info("Alias updated!")
             logging.info(json.loads(alias_update_response.content))
             break
     else:
@@ -170,6 +182,10 @@ def create_version(
             deployment_aliases_api_url, json=body, headers=headers
         )
 
+        if create_alias_response.status_code != 201:
+            raise AliasNotCreatedException(f"Alias can not be created! {create_alias_response.status_code}")
+
+        logging.info("New alias created!")
         logging.info(json.loads(create_alias_response.content))
 
 
