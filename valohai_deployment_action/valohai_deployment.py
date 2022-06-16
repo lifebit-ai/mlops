@@ -132,13 +132,12 @@ def create_version(
         deployment_api_url, json=payload, headers=headers
     )
 
+    response = json.loads(deployment_response.content)
+    logging.info(response)
     if deployment_response.status_code != 201:
         raise VersionNotCreatedException(f"Version can not be created! {deployment_response.status_code}")
 
-    response = json.loads(deployment_response.content)
-
     logging.info("New version created!")
-    logging.info(response)
 
     body = {
         "deployment": DEPLOYMENT_ID,
@@ -168,11 +167,10 @@ def create_version(
                 headers=headers,
             )
 
+            logging.info(json.loads(alias_update_response.content))
             if alias_update_response.status_code != 200:
                 raise AliasNotCreatedException(f"Alias can not be updated! {alias_update_response.status_code}")
 
-            logging.info("Alias updated!")
-            logging.info(json.loads(alias_update_response.content))
             break
     else:
         logging.info("Alias is being created.")
@@ -182,11 +180,9 @@ def create_version(
             deployment_aliases_api_url, json=body, headers=headers
         )
 
+        logging.info(json.loads(create_alias_response.content))
         if create_alias_response.status_code != 201:
             raise AliasNotCreatedException(f"Alias can not be created! {create_alias_response.status_code}")
-
-        logging.info("New alias created!")
-        logging.info(json.loads(create_alias_response.content))
 
 
 if __name__ == "__main__":
