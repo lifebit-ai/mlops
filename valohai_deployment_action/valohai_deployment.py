@@ -237,12 +237,30 @@ if __name__ == "__main__":
         default="staging",
     )
 
-    args = parser.parse_args()
-    create_version(
-        args.branch,
-        args.commit_id,
-        args.replicas,
-        args.memory_limit,
-        args.cpu_request,
-        args.alias_name,
+    parser.add_argument(
+        "--commit_message",
+        "-cm",
+        type=str,
+        dest="commit_message",
+        help="commit message",
+        default=None,
     )
+
+    args = parser.parse_args()
+
+    #cancel deployement if PR/commit message mentions non-deployement keywords.
+    if( args.commit_message is not None and
+       ('do-not-deploy' in args.commit_message or
+        'dnd' in args.commit_message or
+        'read-me-like' in args.commit_message)):
+        logging.info(f'deployement cancelled')
+        
+    else:
+        create_version(
+                args.branch,
+                args.commit_id,
+                args.replicas,
+                args.memory_limit,
+                args.cpu_request,
+                args.alias_name,
+           )
