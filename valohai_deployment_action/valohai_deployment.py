@@ -253,8 +253,8 @@ if __name__ == "__main__":
        ('do-not-deploy' in args.commit_message or
         'dnd' in args.commit_message or
         'read-me-like' in args.commit_message)):
-        logging.info(f'deployement cancelled')
-        
+        logging.info('deployement cancelled')
+
     else:
         create_version(
                 args.branch,
