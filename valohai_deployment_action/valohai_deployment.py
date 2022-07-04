@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import time
 from typing import Dict, Optional
 
 import requests
@@ -184,6 +185,15 @@ def create_version(
         if create_alias_response.status_code != 201:
             raise AliasNotCreatedException(f"Alias can not be created! {create_alias_response.status_code}")
 
+    time.sleep(300)
+    endpoint_id = response["endpoints"][0]["id"]
+    logs = requests.get(
+        VALOHAI_API_BASE_URL + f"deployment-endpoints/{endpoint_id}/logs/",
+        params={"start": "2022-06-30T00:00"},
+        headers=headers,
+    )
+    logging.info(logs)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Valohai version deployment.""")
@@ -248,19 +258,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    #cancel deployement if PR/commit message mentions non-deployement keywords.
-    if( args.commit_message is not None and
-       ('do-not-deploy' in args.commit_message or
-        'dnd' in args.commit_message or
-        'read-me-like' in args.commit_message)):
+    # cancel deployement if PR/commit message mentions non-deployement keywords.
+    if (args.commit_message is not None and
+            ('do-not-deploy' in args.commit_message or
+             'dnd' in args.commit_message or
+             'read-me-like' in args.commit_message)):
         logging.info('deployement cancelled')
 
     else:
         create_version(
-                args.branch,
-                args.commit_id,
-                args.replicas,
-                args.memory_limit,
-                args.cpu_request,
-                args.alias_name,
-           )
+            args.branch,
+            args.commit_id,
+            args.replicas,
+            args.memory_limit,
+            args.cpu_request,
+            args.alias_name,
+        )
