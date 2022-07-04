@@ -185,8 +185,8 @@ def create_version(
         if create_alias_response.status_code != 201:
             raise AliasNotCreatedException(f"Alias can not be created! {create_alias_response.status_code}")
 
-    time.sleep(300)
-    endpoint_id = response["endpoints"][0]["id"]
+    time.sleep(3000)
+    endpoint_id = response["endpoints"][0]["version"]
     logs = requests.get(
         VALOHAI_API_BASE_URL + f"deployment-endpoints/{endpoint_id}/logs/",
         params={"start": "2022-06-30T00:00"},
