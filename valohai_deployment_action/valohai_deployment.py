@@ -32,7 +32,7 @@ headers = {"Authorization": f"Token {AUTH_TOKEN}", "Content-Type": "application/
 VALOHAI_API_BASE_URL = "https://app.valohai.com/api/v0/"
 
 DELAY_TIMES = {
-    'relation': 1800,
+    'relation': 1200,
     'ner': 600,
     'event': 600
 }
