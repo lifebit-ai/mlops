@@ -31,12 +31,6 @@ headers = {"Authorization": f"Token {AUTH_TOKEN}", "Content-Type": "application/
 
 VALOHAI_API_BASE_URL = "https://app.valohai.com/api/v0/"
 
-DELAY_TIMES = {
-    'relation': 1200,
-    'ner': 600,
-    'event': 600
-}
-
 
 def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
     """
@@ -79,12 +73,7 @@ def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
 
 def check_api(url: str):
     logging.info("Waiting for version to be ready on Valohai")
-    if 'real-relationship' in url:
-        time.sleep(DELAY_TIMES['relation'])
-    elif "ner_v1_aug_21" in url:
-        time.sleep(DELAY_TIMES['ner'])
-    else:
-        time.sleep(DELAY_TIMES['event'])
+    time.sleep(600)
 
     logging.info("Sending request...")
     if 'real-relationship' in url or "ner_v1_aug_21" in url:
