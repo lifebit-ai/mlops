@@ -12,3 +12,7 @@ class VersionNotCreatedException(ValohaiException):
 
 class AliasNotCreatedException(ValohaiException):
     """Alias can not be created."""
+
+
+class ApiNotWorkingException(ValohaiException):
+    """API is not working in Valohai."""
