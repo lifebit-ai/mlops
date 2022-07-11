@@ -33,7 +33,7 @@ VALOHAI_API_BASE_URL = "https://app.valohai.com/api/v0/"
 
 DELAY_TIMES = {
     'relation': 1800,
-    'ner': 900,
+    'ner': 0,
     'event': 1200
 }
 
@@ -88,9 +88,9 @@ def check_api(url: str):
 
     logging.info("Sending request...")
     if 'real-relationship' in url or "ner_v1_aug_21" in url:
-        data = json.load(open("../test_data/relation_ner_test_data.json"))
+        data = json.load(open("mlops/test_data/relation_ner_test_data.json"))
     else:
-        data = json.load(open("../test_data/event_test_data.json"))
+        data = json.load(open("mlops/test_data/event_test_data.json"))
 
     fetch_repo_changes = requests.post(url, json=data, headers={"Content-type": "application/json"})
     if fetch_repo_changes.status_code != 200:
