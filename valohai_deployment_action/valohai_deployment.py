@@ -34,7 +34,7 @@ VALOHAI_API_BASE_URL = "https://app.valohai.com/api/v0/"
 DELAY_TIMES = {
     'relation': 1800,
     'ner': 600,
-    'event': 1200
+    'event': 600
 }
 
 
