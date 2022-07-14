@@ -2,12 +2,14 @@ import argparse
 import json
 import logging
 import os
+import time
 from typing import Dict, Optional
 
 import requests
 import yaml
 
-from custom_exceptions import MissingDatumException, VersionNotCreatedException, AliasNotCreatedException
+from custom_exceptions import MissingDatumException, VersionNotCreatedException, AliasNotCreatedException, \
+    ApiNotWorkingException
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,14 +41,14 @@ def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
     if "files" not in valohai_config[0]["endpoint"]:
         return {}
 
-    # Create a dictionary of data files based on valohai.yaml config
+    # Create a dictionary of test_data files based on valohai.yaml config
     required_data_files = dict(
         (file["name"], file["path"]) for file in valohai_config[0]["endpoint"]["files"]
     )
 
     datum_ids = {}
 
-    # If any data file is required for the endpoint, get it's datum id
+    # If any test_data file is required for the endpoint, get it's datum id
     if required_data_files:
         datum_api_url = VALOHAI_API_BASE_URL + "datum-aliases/"
         datum_res = requests.get(datum_api_url, headers=headers)
@@ -59,7 +61,7 @@ def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
             if datum["project"]["id"] == PROJECT_ID:
                 datum_ids[datum["datum"]["name"]] = datum["datum"]["id"]
 
-    # Verify all required data files are covered in the datum_ids
+    # Verify all required test_data files are covered in the datum_ids
     if set(required_data_files.values()) == set(datum_ids.keys()):
         return dict(
             (file, datum_ids[path]) for file, path in required_data_files.items()
@@ -67,6 +69,23 @@ def get_datum_ids_of_files_for_deployment() -> Optional[Dict]:
     else:
         logging.error("No Datum Files found. Deployment will not succeed!")
         raise MissingDatumException("Missing Datum files.")
+
+
+def check_api(url: str):
+    logging.info("Waiting for version to be ready on Valohai")
+    time.sleep(600)
+
+    logging.info("Sending request...")
+    if 'real-relationship' in url or "ner_v1_aug_21" in url:
+        data = json.load(open("mlops/test_data/relation_ner_test_data.json"))
+    else:
+        data = json.load(open("mlops/test_data/event_test_data.json"))
+
+    fetch_repo_changes = requests.post(url, json=data, headers={"Content-type": "application/json"})
+    if fetch_repo_changes.status_code != 200:
+        raise ApiNotWorkingException("API is not working. Check logs in Valohai version.")
+    else:
+        logging.info("API is ready!")
 
 
 def create_version(
@@ -184,6 +203,9 @@ def create_version(
         if create_alias_response.status_code != 201:
             raise AliasNotCreatedException(f"Alias can not be created! {create_alias_response.status_code}")
 
+    url = response['endpoint_urls']['predict']
+    check_api(url)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="""Valohai version deployment.""")
@@ -248,19 +270,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    #cancel deployement if PR/commit message mentions non-deployement keywords.
-    if( args.commit_message is not None and
-       ('do-not-deploy' in args.commit_message or
-        'dnd' in args.commit_message or
-        'read-me-like' in args.commit_message)):
+    # cancel deployement if PR/commit message mentions non-deployement keywords.
+    if (args.commit_message is not None and
+            ('do-not-deploy' in args.commit_message or
+             'dnd' in args.commit_message or
+             'read-me-like' in args.commit_message)):
         logging.info('deployement cancelled')
 
     else:
         create_version(
-                args.branch,
-                args.commit_id,
-                args.replicas,
-                args.memory_limit,
-                args.cpu_request,
-                args.alias_name,
-           )
+            args.branch,
+            args.commit_id,
+            args.replicas,
+            args.memory_limit,
+            args.cpu_request,
+            args.alias_name,
+        )
