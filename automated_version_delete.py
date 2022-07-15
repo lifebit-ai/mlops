@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import requests
 
@@ -20,13 +20,15 @@ def find_versions(all_versions):
                 if 'dev' not in v.json()['endpoints'][0]['endpoint_url']:
                     continue
                 print(v.json()['name'], ":", v.json()['endpoints'][0]['endpoint_url'])
+
+                now = datetime.now(timezone.utc)
+                twelve_hours_before = now - timedelta(hours=12)
                 logs = requests.get(
                     VALOHAI_API_BASE_URL + f"deployment-endpoints/{endpoint_id}/logs/",
-                    params={"start": "2022-06-30T00:00", "end": "2022-07-30T00:00"},
+                    params={"start": twelve_hours_before.strftime("%Y-%m-%dT%H:%M"),
+                            "end": now.strftime("%Y-%m-%dT%H:%M")},
                     headers=headers,
                 )
-                now = datetime.now(timezone.utc)
-
                 logs = logs.json()
                 key = next(iter(logs))
                 last_message = logs[key][-1]
