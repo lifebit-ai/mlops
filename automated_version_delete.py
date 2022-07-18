@@ -1,3 +1,5 @@
+import json
+import logging
 import os
 from datetime import datetime, timezone, timedelta
 
@@ -19,8 +21,7 @@ def find_versions(all_versions):
                 endpoint_id = v.json()['endpoints'][0]['id']
                 if 'dev' not in v.json()['endpoints'][0]['endpoint_url']:
                     continue
-                print(v.json()['name'], ":", v.json()['endpoints'][0]['endpoint_url'])
-
+                logging.info(v.json()['name'], ":", v.json()['endpoints'][0]['endpoint_url'])
                 now = datetime.now(timezone.utc)
                 twelve_hours_before = now - timedelta(hours=12)
                 logs = requests.get(
@@ -38,10 +39,19 @@ def find_versions(all_versions):
                     continue
                 last_used_time = last_used_time.split('.')[0]
                 date_time_obj = datetime.strptime(last_used_date + " " + last_used_time, '%Y-%m-%d %H:%M:%S')
-
                 delta = now.replace(tzinfo=None) - date_time_obj.replace(tzinfo=None)
-                unused_h = delta.seconds / 60 / 60
-                print("Unused", unused_h, "hours")
+                logging.info("Unused for: ", delta)
+                if delta.days > 0 or delta.seconds / 60 / 60 > 12:
+                    logging.info("Deleting")
+                    version_delete = requests.put(
+                        v.json()['url'],
+                        json={
+                            "enabled": False,
+                            "name": v.json()['name'],
+                        },
+                        headers=headers,
+                    )
+                    logging.info(json.loads(version_delete.content))
 
 
 def main():
